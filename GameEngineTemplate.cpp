@@ -1,4 +1,5 @@
 ﻿#include <iostream>
+#include <string>
 
 // OpenGL
 #include <glad/glad.h>
@@ -274,6 +275,16 @@ int main()
     ImVec2 sceneWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT);
     bool shouldRefreshSceneWindow = false;
 
+    // Engine Info
+    const char* ENGINE_NAME = "Kuki Engine";
+    const char* ENGINE_VERSION = "0.1.0";
+    const std::string REPO_URL = "https://github.com/UPC-GameEngines-BCN-2026/KukiEngine";
+
+    // Windows visibility
+    bool showSceneWindow = true;
+    bool showDemoWindow = true;
+    bool showAboutWindow = false;
+
     while (isRunning)
     {
         // INPUT
@@ -400,7 +411,40 @@ int main()
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
         ImGuizmo::BeginFrame();
+        
+        // Menu windows
+        if (ImGui::BeginMainMenuBar()) {
+            if (ImGui::BeginMenu("File")) {
+                if (ImGui::MenuItem("Exit")) {
+                    isRunning = false;
+                }
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("View")) {
+                ImGui::MenuItem("Scene", nullptr, &showSceneWindow);
+                ImGui::MenuItem("ImGui Demo", nullptr, &showDemoWindow);
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("Help")) {
+                if (ImGui::MenuItem("Github Documentation")) {
+                    SDL_OpenURL("https://github.com/UPC-GameEngines-BCN-2026/KukiEngine/docs");
+                }
+                if (ImGui::MenuItem("Report a Bug")) {
+                    SDL_OpenURL("https://github.com/UPC-GameEngines-BCN-2026/KukiEngine/issues");
+                }
+                if (ImGui::MenuItem("Download latest release")) {
+                    SDL_OpenURL("https://github.com/UPC-GameEngines-BCN-2026/KukiEngine/releases");
+                }
+                ImGui::Separator();
+                if (ImGui::MenuItem("About")) {
+                    showAboutWindow = true;
+                }
+                ImGui::EndMenu();
+            }
+            ImGui::EndMainMenuBar();
+        }
 
+        // Scene windows
         const bool gizmoActive = ImGuizmo::IsOver() || ImGuizmo::IsUsing();
         ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
         if (gizmoActive)
@@ -408,21 +452,70 @@ int main()
             flags |= ImGuiWindowFlags_NoMove;
         }
 
-        ImGui::Begin("Kuki Engine", nullptr, flags);
-        ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
-        ImVec2 newSceneWindowSize = ImGui::GetContentRegionAvail();
-        shouldRefreshSceneWindow = (newSceneWindowSize.x != sceneWindowSize.x || newSceneWindowSize.y != sceneWindowSize.y);
-        sceneWindowSize = newSceneWindowSize;
-        ImGui::Image(frameBufferObject.RENDER_TO_TEXTURE_ID, newSceneWindowSize, ImVec2(0, 1), ImVec2(1, 0));
+        if (showSceneWindow) {
+            ImGui::Begin("Kuki Engine", &showSceneWindow, flags);
+            ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
+            ImVec2 newSceneWindowSize = ImGui::GetContentRegionAvail();
+            shouldRefreshSceneWindow = (newSceneWindowSize.x != sceneWindowSize.x || newSceneWindowSize.y != sceneWindowSize.y);
+            sceneWindowSize = newSceneWindowSize;
+            ImGui::Image(frameBufferObject.RENDER_TO_TEXTURE_ID, newSceneWindowSize, ImVec2(0, 1), ImVec2(1, 0));
 
-        glDisable(GL_DEPTH_TEST);
-        ImGuizmo::SetRect(cursorScreenPos.x, cursorScreenPos.y, newSceneWindowSize.x, newSceneWindowSize.y);
-        ImGuizmo::SetDrawlist();
-        ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(projectionMatrix), ImGuizmo::TRANSLATE, ImGuizmo::WORLD, glm::value_ptr(modelMatrix));
-        glEnable(GL_DEPTH_TEST);
-        ImGui::End();
+            glDisable(GL_DEPTH_TEST);
+            ImGuizmo::SetRect(cursorScreenPos.x, cursorScreenPos.y, newSceneWindowSize.x, newSceneWindowSize.y);
+            ImGuizmo::SetDrawlist();
+            ImGuizmo::Manipulate(glm::value_ptr(viewMatrix), glm::value_ptr(projectionMatrix), ImGuizmo::TRANSLATE, ImGuizmo::WORLD, glm::value_ptr(modelMatrix));
+            glEnable(GL_DEPTH_TEST);
+            ImGui::End();
+        }
+        
+        // Demo windows
+        if (showDemoWindow) {
+            ImGui::ShowDemoWindow(&showDemoWindow);
+        }
 
-        ImGui::ShowDemoWindow();
+        // About windows
+        if (showAboutWindow) {
+            ImGui::Begin("About Us", &showAboutWindow);
+
+            ImGui::Text("Team Members:");
+            ImGui::Text("Sofia Barja Navarro");
+            ImGui::Text("Kirsten Neubauer Pons");
+            ImGui::Text("Pau Gallego Guerrero");
+            ImGui::Separator();
+
+            ImGui::Text("Libraries Used:");
+            ImGui::BulletText("SDL3"); //%s", SDL_GetVersion()
+            ImGui::BulletText("OpenGL"); //, reinterpret_cast<const char*>(glGetString(GL_VERSION))
+            ImGui::BulletText("GLAD"); //%s", gladLoadGL())
+            ImGui::BulletText("GLM: version 1.0.1");
+            ImGui::BulletText("ImGui %s", ImGui::GetVersion());
+            ImGui::BulletText("ImGuizmo: version 1.89");
+            ImGui::Separator();
+
+            ImGui::Text("Lisence: MIT");
+            ImGui::TextWrapped("MIT License\n\n"
+
+                "Copyright(c) 2026 CITM - UPC\n\n"
+
+                "Permission is hereby granted, free of charge, to any person obtaining a copy"
+                "of this software and associated documentation files(the \"Software\"), to deal"
+                "in the Software without restriction, including without limitation the rights"
+                "to use, copy, modify, merge, publish, distribute, sublicense, and /or sell"
+                "copies of the Software, and to permit persons to whom the Software is"
+                "furnished to do so, subject to the following conditions:\n\n"
+
+                "The above copyright notice and this permission notice shall be included in all"
+                "copies or substantial portions of the Software.\n\n"
+
+                "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR"
+                "IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,"
+                "FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE"
+                "AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER"
+                "LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,"
+                "OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE"
+                "SOFTWARE.");
+            ImGui::End();
+        }
 
         // Render ImGui
         ImGui::Render();
