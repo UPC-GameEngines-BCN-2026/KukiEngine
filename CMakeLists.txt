@@ -29,6 +29,15 @@ target_link_libraries(${PROJECT_NAME} PRIVATE glad::glad)
 target_link_libraries(${PROJECT_NAME} PRIVATE imgui::imgui)
 target_link_libraries(${PROJECT_NAME} PRIVATE imguizmo::imguizmo)
 
+# Disable RTTI and exceptions
+if (MSVC)
+    string(REGEX REPLACE "/EHsc" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    target_compile_options(${PROJECT_NAME} PRIVATE /GR- /EHs-c-)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE _HAS_EXCEPTIONS=0)
+else()
+    target_compile_options(${PROJECT_NAME} PRIVATE -fno-rtti -fno-exceptions)
+endif()
+
 # For generating the release, we need to copy assets folder to build folder
 file(COPY ${CMAKE_SOURCE_DIR}/Data DESTINATION ${CMAKE_BINARY_DIR})
 

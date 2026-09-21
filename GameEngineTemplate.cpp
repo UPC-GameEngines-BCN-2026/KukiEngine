@@ -146,6 +146,7 @@ int main()
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
 
     // Setup Platform/Renderer backends
     ImGui_ImplSDL3_InitForOpenGL(window, glContext);
@@ -407,7 +408,7 @@ int main()
             flags |= ImGuiWindowFlags_NoMove;
         }
 
-        ImGui::Begin("Scene", nullptr, flags);
+        ImGui::Begin("Kuki Engine", nullptr, flags);
         ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
         ImVec2 newSceneWindowSize = ImGui::GetContentRegionAvail();
         shouldRefreshSceneWindow = (newSceneWindowSize.x != sceneWindowSize.x || newSceneWindowSize.y != sceneWindowSize.y);
