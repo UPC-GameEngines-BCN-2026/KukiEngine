@@ -285,6 +285,18 @@ int main()
     bool showDemoWindow = true;
     bool showAboutWindow = false;
 
+    // Configuration options
+    char name[128] = "Kuki Engine";
+    char organization[128] = "UPC CITM";
+    int maxFPS = 60;
+    int windowWidth = 1920;
+    int windowHeight = 1080;
+    float brightness = 0.5f;
+    bool borderless = false;
+    bool fullscreen = false;
+    bool resizable = true;
+
+
     while (isRunning)
     {
         // INPUT
@@ -470,7 +482,59 @@ int main()
         
         // Demo windows
         if (showDemoWindow) {
-            ImGui::ShowDemoWindow(&showDemoWindow);
+            //ImGui::ShowDemoWindow(&showDemoWindow);
+            ImGui::Begin("Configuration Window", &showDemoWindow);
+            //configuration window
+
+            if (ImGui::CollapsingHeader("Application")) {
+                ImGui::InputText("App Name", name, IM_ARRAYSIZE(name));
+                ImGui::InputText("Organization", organization, IM_ARRAYSIZE(organization));
+                ImGui::SliderInt("Max FPS", &maxFPS, 0, 120);
+
+            }
+
+            if (ImGui::CollapsingHeader("Window")) {
+                ImGui::Checkbox("Active", &showSceneWindow);
+                //SDL_HideWindow potentially...
+                ImGui::Text("Icon: *default*");
+                ImGui::SliderFloat("Brightness", &brightness, 0.001f, 1.0f);
+               
+                //size of window
+                if (ImGui::SliderInt("Width", &windowWidth, 640, 3840))
+                {
+                    SDL_SetWindowSize(window, windowWidth, windowHeight);
+                }
+
+                if (ImGui::SliderInt("Height", &windowHeight, 480, 2160))
+                {
+                    SDL_SetWindowSize(window, windowWidth, windowHeight);
+                }
+                //refresh 
+                SDL_DisplayID display = SDL_GetDisplayForWindow(window);
+                const SDL_DisplayMode* mode = SDL_GetCurrentDisplayMode(display);
+
+                if (mode)
+                {
+                    ImGui::Text("Refresh rate: %.2f", mode->refresh_rate);
+                }
+                //fullscreen
+                if (ImGui::Checkbox("Fullscreen", &fullscreen))
+                {
+                    SDL_SetWindowFullscreen(window, fullscreen);
+                }
+                //resizable
+                if (ImGui::Checkbox("Resizable", &resizable))
+                {
+                    SDL_SetWindowResizable(window, resizable);
+                }
+                //borderless
+                if (ImGui::Checkbox("Borderless", &borderless))
+                {
+                    SDL_SetWindowBordered(window, !borderless);
+                }
+                
+            }
+            ImGui::End();
         }
 
         // About windows
