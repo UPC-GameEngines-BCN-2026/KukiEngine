@@ -39,7 +39,7 @@ else()
 endif()
 
 # For generating the release, we need to copy assets folder to build folder
-file(COPY ${CMAKE_SOURCE_DIR}/Data DESTINATION ${CMAKE_BINARY_DIR})
+# file(COPY ${CMAKE_SOURCE_DIR}/Data DESTINATION ${CMAKE_BINARY_DIR})
 
 # Setting custom working directory within root's 'launch.vs.json and copying within .vs folder
 configure_file(

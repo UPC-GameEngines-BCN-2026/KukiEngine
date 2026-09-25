@@ -40,6 +40,24 @@ const char* fragmentShaderSource = "\n"
 "   FragColor = vec4(vertexColor, 1.0f) + vec4(isOutline, isOutline, isOutline, isOutline);\n"
 "}\0";
 
+// crar Logs
+#include <vector>
+
+struct LogMessage {
+    std::string text;
+    bool isError;
+};
+
+// Búfer global de logs
+std::vector<LogMessage> g_EngineLogs;
+
+// Funció helper per afegir logs des de qualsevol part del codi
+void LogApp(const std::string& message, bool isError = false) {
+    g_EngineLogs.push_back({ message, isError });
+    // També ho mostrem a la consola de Visual Studio per si de cas
+    std::cout << message << std::endl;
+}
+
 struct FrameBufferObject
 {
     GLuint FBO_ID = 0;
@@ -101,6 +119,12 @@ int main()
     // Init SDL
     if (!SDL_Init(SDL_INIT_VIDEO))
     {
+        LogApp("Init SDL input event system");
+
+        if (!SDL_Init(SDL_INIT_VIDEO)) {
+            LogApp("Error initializing SDL", true);
+            return -1;
+        }
         return -1;
     }
 
@@ -116,6 +140,7 @@ int main()
         SCREEN_WIDTH, SCREEN_HEIGHT,
         SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
     );
+    LogApp("Creating OpenGL context");
 
     // Early out if window not valid
     if (window == nullptr)
@@ -137,6 +162,7 @@ int main()
 
     // Init all OpenGL function pointers at runtime (not linked at compile time)
     gladLoadGL();
+    LogApp("GLAD initialized successfully");
 
     // Used for mapping NDC coordinates (-1.0f to 1.0f) to pixel coordinates (e.g. 1920x1080)
     glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -144,6 +170,7 @@ int main()
     // IMGUI
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+    LogApp("Initializing ImGui");
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
@@ -534,6 +561,80 @@ int main()
                 }
                 
             }
+
+            if (ImGui::CollapsingHeader("Hardware")) {
+                
+                ImGui::Text("CPUs: %d (Cache: %d kb)", SDL_GetNumLogicalCPUCores(), SDL_GetCPUCacheLineSize());
+                ImGui::Text("System RAM: %.1f GB", SDL_GetSystemRAM() / 1024.0f);
+
+                std::string caps = "Caps: ";
+                // if (SDL_HasRDTSC()) caps += "RDTSC ";
+                if (SDL_HasSSE()) caps += "SSE, ";
+                if (SDL_HasSSE2()) caps += "SSE2, ";
+                if (SDL_HasSSE3()) caps += "SSE3, ";
+                if (SDL_HasSSE41()) caps += "SSE41, ";
+                if (SDL_HasSSE42()) caps += "SSE42, ";
+                if (SDL_HasAVX()) caps += "AVX ";
+                ImGui::TextUnformatted(caps.c_str());
+
+                ImGui::Separator();
+
+                const char* vendor = (const char*)glGetString(GL_VENDOR);
+                const char* renderer = (const char*)glGetString(GL_RENDERER);
+
+                ImGui::Text("GPU: %s", vendor ? vendor : "N/A");
+                ImGui::Text("Brand: %s", renderer ? renderer : "N/A");
+
+                //Definición de OpenGL para memoria de video
+                    #define GL_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX          0x9047
+                    #define GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX    0x9048
+                    #define GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX  0x9049
+
+                GLint totalMemoryKB = 0;
+                GLint currentAvailableKB = 0;
+
+                glGetIntegerv(GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX, &totalMemoryKB);
+                glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &currentAvailableKB);
+
+                if (totalMemoryKB > 0) {
+                    float totalMB = totalMemoryKB / 1024.0f;
+                    float availableMB = currentAvailableKB / 1024.0f;
+                    float usageMB = totalMB - availableMB;
+
+                    ImGui::Text("VRAM Budget: %.1f Mb", totalMB);
+                    ImGui::Text("VRAM Usage: %.1f Mb", usageMB);
+                    ImGui::Text("VRAM Available: %.1f Mb", availableMB);
+                    ImGui::Text("VRAM Reserved: 0.0 Mb");
+                }
+                else {
+                    ImGui::Text("VRAM Info: Not supported by driver / GPU vendor");
+                }
+
+            }
+
+            if (ImGui::CollapsingHeader("Console")) {
+                
+                ImGui::BeginChild("ConsoleLogs", ImVec2(0, 150), true, ImGuiWindowFlags_HorizontalScrollbar);
+
+                // Recorrem tots els logs guardats fins ara
+                for (const auto& log : g_EngineLogs) {
+                    if (log.isError) {
+                        ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "%s", log.text.c_str());
+                    }
+                    else {
+                        ImGui::TextUnformatted(log.text.c_str());
+                    }
+                }
+
+                // Fer scroll automàtic cap a baix quan s'afegeixen nous logs
+                if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY()) {
+                    ImGui::SetScrollHereY(1.0f);
+                }
+
+                ImGui::EndChild();
+
+            }
+
             ImGui::End();
         }
 
